@@ -21,18 +21,19 @@ router.post('/', async (req, res) => {
   } = req.body;
 
   try {
-    // Convert product array to JSON format
     const productsJSON = Array.isArray(product) ? JSON.stringify(product) : product;
     console.log('📌 Incoming Request Body:', req.body);
+    
     const result = await pool.query(
       `INSERT INTO companies (
         name, email, headquarters_location, r_and_d_location, country, product, employeestrength, revenues, 
-        telephone, website, productionvolumes, keycustomers, region, foundingyear, keymanagement, rate, offeringproducts,  pricingstrategy, customerneeds, technologyuse, competitiveadvantage, challenges, recentnews,  productlaunch, strategicpartenrship, comments,  employeesperregion,  businessstrategies, revenue, ebit,  operatingcashflow,  investingcashflow, freecashflow, roce, equityratio
+        telephone, website, productionvolumes, keycustomers, region, foundingyear, keymanagement, rate, offeringproducts, pricingstrategy, customerneeds, technologyuse, competitiveadvantage, challenges, recentnews, productlaunch, strategicpartenrship, comments, employeesperregion, businessstrategies, revenue, ebit, operatingcashflow, investingcashflow, freecashflow, roce, equityratio
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34
+      ) RETURNING *`,
       [
         name, email, headquarters_location, r_and_d_location, country, productsJSON, employeestrength, revenues, 
-        telephone, website, productionvolumes, keycustomers, region, foundingyear, keymanagement, rate, offeringproducts,  pricingstrategy, customerneeds, technologyuse, competitiveadvantage, challenges, recentnews,  productlaunch, strategicpartenrship, comments,  employeesperregion,  businessstrategies, revenue, ebit,  operatingcashflow,  investingcashflow, freecashflow, roce, equityratio
+        telephone, website, productionvolumes, keycustomers, region, foundingyear, keymanagement, rate, offeringproducts, pricingstrategy, customerneeds, technologyuse, competitiveadvantage, challenges, recentnews, productlaunch, strategicpartenrship, comments, employeesperregion, businessstrategies, revenue, ebit, operatingcashflow, investingcashflow, freecashflow, roce, equityratio
       ]
     );
 
@@ -42,7 +43,6 @@ router.post('/', async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: err });
   }
 });
-
 
 
 // Update an existing company

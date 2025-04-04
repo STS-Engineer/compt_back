@@ -16,4 +16,4 @@ app.use(cors({
 app.use('/companies', companyRouter);
 
 //const port = process.env.PORT || 4000;
-app.listen(8080);
+app.listen(8181);

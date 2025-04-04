@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { 
     name, email, headquarters_location, r_and_d_location, country, product, employeestrength, revenues, 
-    telephone, website, productionvolumes, keycustomers, region, foundingyear, keymanagement
+    telephone, website, productionvolumes, keycustomers, region, foundingyear, keymanagement, rate, offeringproducts,  pricingstrategy, customerneeds, technologyuse, competitiveadvantage, challenges, recentnews,  productlaunch, strategicpartenrship, comments,  employeesperregion,  businessstrategies, revenue, ebit,  operatingcashflow,  investingcashflow, freecashflow, roce, equityratio
   } = req.body;
 
   try {
@@ -27,12 +27,12 @@ router.post('/', async (req, res) => {
     const result = await pool.query(
       `INSERT INTO companies (
         name, email, headquarters_location, r_and_d_location, country, product, employeestrength, revenues, 
-        telephone, website, productionvolumes, keycustomers, region, foundingyear, keymanagement
+        telephone, website, productionvolumes, keycustomers, region, foundingyear, keymanagement, rate, offeringproducts,  pricingstrategy, customerneeds, technologyuse, competitiveadvantage, challenges, recentnews,  productlaunch, strategicpartenrship, comments,  employeesperregion,  businessstrategies, revenue, ebit,  operatingcashflow,  investingcashflow, freecashflow, roce, equityratio
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34
       [
         name, email, headquarters_location, r_and_d_location, country, productsJSON, employeestrength, revenues, 
-        telephone, website, productionvolumes, keycustomers, region, foundingyear, keymanagement
+        telephone, website, productionvolumes, keycustomers, region, foundingyear, keymanagement, rate, offeringproducts,  pricingstrategy, customerneeds, technologyuse, competitiveadvantage, challenges, recentnews,  productlaunch, strategicpartenrship, comments,  employeesperregion,  businessstrategies, revenue, ebit,  operatingcashflow,  investingcashflow, freecashflow, roce, equityratio
       ]
     );
 

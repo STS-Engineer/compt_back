@@ -9,8 +9,9 @@ app.use(bodyParser.json());
 // Use cors middleware
 // Allow only requests from http://example.com
 app.use(cors({
-    origin: '*',
-    credentials: true
+    origin: 'https://competitor-avocarbon.azurewebsites.net', // Replace with your frontend URL
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly allow needed methods
 }));
 
 

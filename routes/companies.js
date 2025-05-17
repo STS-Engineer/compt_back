@@ -63,7 +63,7 @@ router.put('/:id', async (req, res) => {
     pricingstrategy, customerneeds, technologyuse, competitiveadvantage,
     challenges, recentnews, productlaunch, strategicpartenrship, comments,
     employeesperregion, businessstrategies, revenue, ebit,
-    operatingcashflow, investingcashflow, freecashflow, roce, equityratio
+    operatingcashflow, investingcashflow, freecashflow, roce, equityratio, employeesperregion, pricingstrategy, productlaunch, ceo, cfo, cto, rdhead, saleshead, productionhead, keydecisionmarker, financialyear
   } = req.body;
 
   try {
@@ -103,8 +103,19 @@ router.put('/:id', async (req, res) => {
         investingcashflow = $32,
         freecashflow = $33,
         roce = $34,
-        equityratio = $35
-      WHERE id = $36
+        equityratio = $35,
+        employeesperregion = $36,
+        pricingstrategy = $37,
+        productlaunch = $38,
+        ceo = $39,
+        cfo = $40,
+        cto = $41,
+        rdhead = $42,
+        saleshead = $43,
+        productionhead = $44,
+        keydecisionmarker = $45,
+        financialyear = $46
+      WHERE id = $47
       RETURNING *`,
       [
         name, email, headquarters_location, r_and_d_location, country, product,
@@ -113,7 +124,7 @@ router.put('/:id', async (req, res) => {
         pricingstrategy, customerneeds, technologyuse, competitiveadvantage,
         challenges, recentnews, productlaunch, strategicpartenrship, comments,
         employeesperregion, businessstrategies, revenue, ebit,
-        operatingcashflow, investingcashflow, freecashflow, roce, equityratio, id
+        operatingcashflow, investingcashflow, freecashflow, roce, equityratio, employeesperregion, pricingstrategy, productlaunch, ceo, cfo, cto, rdhead, saleshead, productionhead, keydecisionmarker, financialyear, id
       ]
     );
     res.json(result.rows[0]);

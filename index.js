@@ -9,7 +9,7 @@ app.use(bodyParser.json());
 // Use cors middleware
 // Allow only requests from http://example.com
 app.use(cors({
-    origin: 'https://competitor-avocarbon.azurewebsites.net',
+    origin: '*',
     credentials: true
 }));
 

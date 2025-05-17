@@ -1,22 +1,22 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const companyRouter = require('./routes/companies');
-const cors = require('cors'); // Import the cors middleware
+const cors = require('cors');
 
+const companyRouter = require('./routes/companies');
 const app = express();
 
-app.use(bodyParser.json());
-// Use cors middleware
-// Allow only requests from http://example.com
-app.use(cors({
-    origin: 'https://competitor-avocarbon.azurewebsites.net', // Replace with your frontend URL
+const corsOptions = {
+    origin: 'https://competitor-avocarbon.azurewebsites.net',
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Explicitly allow needed methods
-}));
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+};
 
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Handle preflight
 
-
+app.use(bodyParser.json());
 app.use('/companies', companyRouter);
 
-//const port = process.env.PORT || 4000;
-app.listen(8080);
+app.listen(8080, () => {
+    console.log('Server running on port 8080');
+});

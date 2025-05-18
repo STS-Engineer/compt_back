@@ -7,9 +7,10 @@ const app = express();
 
 // Configure CORS for production (replace * with your frontend URL later)
 const corsOptions = {
-  origin: '*', // Allows all origins (temporary for testing)
+  origin: 'https://competitor-avocarbon.azurewebsites.net', // Your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true // If using cookies/auth headers
 };
 
 app.use(cors(corsOptions));

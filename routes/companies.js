@@ -64,6 +64,21 @@ router.get('/approvee/:token', async (req, res) => {
       'SELECT * FROM pending_companies WHERE token = $1 AND status = $2',
       [token, 'pending']
     );
+
+   if (result.rows.length === 0) {
+    // Check if it's already approved
+  const approvedCheck = await pool.query(
+    'SELECT * FROM pending_companies WHERE token = $1 AND status = $2',
+    [token, 'approved']
+  );
+
+  if (approvedCheck.rows.length > 0) {
+    return res.send('✅ This competitor request has already been approved.');
+  }
+
+  return res.status(404).send('❌ Invalid token.');
+}
+
     const companyData = result.rows[0].form_data;
     console.log('responsedata',companyData);
   

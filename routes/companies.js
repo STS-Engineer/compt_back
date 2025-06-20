@@ -73,7 +73,7 @@ router.get('/approvee/:token', async (req, res) => {
   );
 
   if (approvedCheck.rows.length > 0) {
-    return res.send('✅ This competitor request has already been approved.');
+    return res.send('✅ This competitor requesthas  been approved by Parrimal PATKKI .');
   }
 
   return res.status(404).send('❌ Invalid token.');

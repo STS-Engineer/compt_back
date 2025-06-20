@@ -68,7 +68,7 @@ router.post('/', async (req, res) => {
       [formData, email, token]
     );
 
-    const approvalLink = `http://localhost:4000/companies/approvee/${token}`;
+    const approvalLink = `https://compt-back.azurewebsites.net/companies/approvee/${token}`;
     await sendApprovalEmail(email, approvalLink);
 
     res.status(200).json({ message: 'Submission received. Awaiting admin approval.' });
@@ -96,7 +96,7 @@ router.put('/:id', async (req, res) => {
     );
 
     // Send approval email
-    const approvalLink = `http://localhost:4000/companies/approvee/${token}`;
+    const approvalLink = `https://compt-back.azurewebsites.net/companies/approvee/${token}`;
     await sendApprovalEmail(email, approvalLink);
 
     res.status(200).json({ message: 'Submission received. Awaiting admin approval.' });
@@ -249,7 +249,7 @@ router.post('/request-approval', async (req, res) => {
       [userEmail, type, token]
     );
 
-    const approvalLink = `http://localhost:4000/companies/approve/${token}`;
+    const approvalLink = `https://compt-back.azurewebsites.net/companies/approve/${token}`;
 
 
 
@@ -264,7 +264,7 @@ await transporter.sendMail({
       <p>User <strong>${userEmail}</strong> has requested to <strong>${type}</strong> a competitor.</p>
       <p>Please review and approve the request using the button below:</p>
       <div style="text-align: center; margin: 30px 0;">
-        <a href="http://localhost:4000/companies/approve/${token}" 
+        <a href="https://compt-back.azurewebsites.net/companies/approve/${token}" 
            style="background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; font-weight: bold; border-radius: 5px; display: inline-block;">
           Approve Request
         </a>

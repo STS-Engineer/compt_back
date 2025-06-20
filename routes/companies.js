@@ -64,11 +64,6 @@ router.get('/approvee/:token', async (req, res) => {
       'SELECT * FROM pending_companies WHERE token = $1 AND status = $2',
       [token, 'pending']
     );
-
-    if (result.rows.length === 0) {
-      return res.status(404).send('Invalid or already approved.');
-    }
-
     const companyData = result.rows[0].form_data;
     console.log('responsedata',companyData);
   

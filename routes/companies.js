@@ -54,6 +54,56 @@ async function sendApprovalEmail(requesterEmail, approvalLink) {
   await transporter.sendMail(mailOptions);
 }
 
+
+//Add neew pending companies
+router.post('/', async (req, res) => {
+  const token = uuidv4();
+  const formData = req.body;
+  const email = formData.email;
+
+
+  try {
+    await pool.query(
+      `INSERT INTO pending_companies (form_data, email, token) VALUES ($1, $2, $3)`,
+      [formData, email, token]
+    );
+
+    const approvalLink = `http://localhost:4000/companies/approvee/${token}`;
+    await sendApprovalEmail(email, approvalLink);
+
+    res.status(200).json({ message: 'Submission received. Awaiting admin approval.' });
+  } catch (err) {
+    console.error('❌ Error storing pending company:', err);
+    res.status(500).json({ message: 'Error submitting company' });
+  }
+});
+
+router.put('/:id', async (req, res) => {
+  const token = uuidv4();
+
+  // ✅ Add this line to include the ID in the form data
+  const formData = { ...req.body, id: req.params.id };
+
+  const email = formData.email;
+
+  try {
+    // Save to pending_companies with 'pending' status
+    await pool.query(
+      `INSERT INTO pending_companies (form_data, email, token, status) VALUES ($1, $2, $3, $4)`,
+      [formData, email, token, 'pending']
+    );
+
+    // Send approval email
+    const approvalLink = `https://compt-back.azurewebsites.net/companies/approvee/${token}`;
+    await sendApprovalEmail(email, approvalLink);
+
+    res.status(200).json({ message: 'Submission received. Awaiting admin approval.' });
+  } catch (err) {
+    console.error('❌ Error storing pending company:', err);
+    res.status(500).json({ message: 'Error submitting company' });
+  }
+});
+
 //handle Approve 
 router.get('/approvee/:token', async (req, res) => {
   const { token } = req.params;
@@ -167,61 +217,6 @@ await pool.query(
     res.status(500).send('Internal Server Error');
   }
 });
-
-
-
-//Add neew pending companies
-router.post('/', async (req, res) => {
-  const token = uuidv4();
-  const formData = req.body;
-  const email = formData.email;
-
-
-  try {
-   await pool.query(
-      `INSERT INTO pending_companies (form_data, email, token, status) VALUES ($1, $2, $3, $4)`,
-      [formData, email, token, 'pending']
-    );
-      
-    const approvalLink = `https://compt-back.azurewebsites.net/companies/approvee/${token}`;
-    await sendApprovalEmail(email, approvalLink);
-
-    res.status(200).json({ message: 'Submission received. Awaiting admin approval.' });
-  } catch (err) {
-    console.error('❌ Error storing pending company:', err);
-    res.status(500).json({ message: 'Error submitting company' });
-  }
-});
-
-
-
-router.put('/:id', async (req, res) => {
-  const token = uuidv4();
-
-  // ✅ Add this line to include the ID in the form data
-  const formData = { ...req.body, id: req.params.id };
-
-  const email = formData.email;
-
-  try {
-    // Save to pending_companies with 'pending' status
-    await pool.query(
-      `INSERT INTO pending_companies (form_data, email, token, status) VALUES ($1, $2, $3, $4)`,
-      [formData, email, token, 'pending']
-    );
-
-    // Send approval email
-    const approvalLink = `https://compt-back.azurewebsites.net/companies/approvee/${token}`;
-    await sendApprovalEmail(email, approvalLink);
-
-    res.status(200).json({ message: 'Submission received. Awaiting admin approval.' });
-  } catch (err) {
-    console.error('❌ Error storing pending company:', err);
-    res.status(500).json({ message: 'Error submitting company' });
-  }
-});
-
-
 
 
 // Get a single company by ID

@@ -68,7 +68,7 @@ router.post('/', async (req, res) => {
       [formData, email, token]
     );
 
-    const approvalLink = `http://localhost:4000/companies/approvee/${token}`;
+    const approvalLink = `https://compt-back.azurewebsites.net/companies/approvee/${token}`;
     await sendApprovalEmail(email, approvalLink);
 
     res.status(200).json({ message: 'Submission received. Awaiting admin approval.' });

@@ -65,20 +65,9 @@ router.get('/approvee/:token', async (req, res) => {
       [token, 'pending']
     );
 
-   if (result.rows.length === 0) {
-    // Check if it's already approved
-  const approvedCheck = await pool.query(
-    'SELECT * FROM pending_companies WHERE token = $1 AND status = $2',
-    [token, 'approved']
-  );
-
-  if (approvedCheck.rows.length > 0) {
-    return res.send('✅ This competitor requesthas  been approved by Parrimal PATKKI .');
-  }
-
-  return res.status(404).send('❌ Invalid token.');
-}
-
+     if (result.rows.length === 0) {
+      return res.status(404).send('Invalid or already approved.');
+    }
     const companyData = result.rows[0].form_data;
     console.log('responsedata',companyData);
   
@@ -189,11 +178,11 @@ router.post('/', async (req, res) => {
 
 
   try {
-    await pool.query(
-      `INSERT INTO pending_companies (form_data, email, token) VALUES ($1, $2, $3)`,
-      [formData, email, token]
+   await pool.query(
+      `INSERT INTO pending_companies (form_data, email, token, status) VALUES ($1, $2, $3, $4)`,
+      [formData, email, token, 'pending']
     );
-
+      
     const approvalLink = `https://compt-back.azurewebsites.net/companies/approvee/${token}`;
     await sendApprovalEmail(email, approvalLink);
 

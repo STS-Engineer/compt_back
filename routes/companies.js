@@ -64,8 +64,8 @@ router.post('/', async (req, res) => {
 
   try {
     await pool.query(
-      `INSERT INTO pending_companies (form_data, email, token) VALUES ($1, $2, $3)`,
-      [formData, email, token]
+      `INSERT INTO pending_companies (form_data, email, token, status) VALUES ($1, $2, $3, $4)`,
+      [formData, email, token, 'pending']
     );
 
     const approvalLink = `https://compt-back.azurewebsites.net/companies/approvee/${token}`;

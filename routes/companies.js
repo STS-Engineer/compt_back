@@ -205,11 +205,7 @@ await pool.query(
 
     }
 
-    // Mark approved
-    await pool.query(
-      'UPDATE pending_companies SET status = $1 WHERE token = $2',
-      ['approved', token]
-    );
+
 
     res.send('✅ Competitor request approved by Parrimal PATKKI.');
   } catch (err) {

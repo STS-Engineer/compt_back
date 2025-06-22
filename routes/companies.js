@@ -104,108 +104,107 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-//handle Approve 
-router.get('/approvee/:token', async (req, res) => {
+
+
+router.post('/approvee/:token', async (req, res) => {
   const { token } = req.params;
 
   try {
-    // Get pending company
     const result = await pool.query(
       'SELECT * FROM pending_companies WHERE token = $1 AND status = $2',
       [token, 'pending']
     );
 
-     if (result.rows.length === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).send('Invalid or already approved.');
     }
+
     const companyData = result.rows[0].form_data;
-    console.log('responsedata',companyData);
-  
+
     if (Array.isArray(companyData.productionlocation)) {
-    companyData.productionlocation = companyData.productionlocation.join('; ');
-   }
-
-    // Check if update or insert
-    if (companyData.id) {
-      // UPDATE
-   await pool.query(
-   `UPDATE companies SET 
-    name = $1, email = $2, headquarters_location = $3, r_and_d_location = $4,
-    country = $5, product = $6, employeestrength = $7, revenues = $8, 
-    telephone = $9, website = $10, productionvolumes = $11, keycustomers = $12,
-    region = $13, foundingyear = $14, keymanagement = $15, rate = $16,
-    offeringproducts = $17, customerneeds = $18, technologyuse = $19,
-    competitiveadvantage = $20, challenges = $21, recentnews = $22,
-    strategicpartenrship = $23, comments = $24, businessstrategies = $25,
-    revenue = $26, ebit = $27, operatingcashflow = $28, investingcashflow = $29,
-    freecashflow = $30, roce = $31, equityratio = $32, employeesperregion = $33,
-    pricingstrategy = $34, productlaunch = $35, ceo = $36, cfo = $37,
-    cto = $38, rdhead = $39, saleshead = $40, productionhead = $41,
-    keydecisionmarker = $42, financialyear = $43, productionlocation = $44
-  WHERE id = $45`,
-  [
-    companyData.name, companyData.email, companyData.headquarters_location,
-    companyData.r_and_d_location, companyData.country, companyData.product,
-    companyData.employeestrength, companyData.revenues, companyData.telephone,
-    companyData.website, companyData.productionvolumes, companyData.keycustomers,
-    companyData.region, companyData.foundingyear, companyData.keymanagement,
-    companyData.rate, companyData.offeringproducts, companyData.customerneeds,
-    companyData.technologyuse, companyData.competitiveadvantage,
-    companyData.challenges, companyData.recentnews, companyData.strategicpartenrship,
-    companyData.comments, companyData.businessstrategies, companyData.revenue,
-    companyData.ebit, companyData.operatingcashflow, companyData.investingcashflow,
-    companyData.freecashflow, companyData.roce, companyData.equityratio,
-    companyData.employeesperregion, companyData.pricingstrategy,
-    companyData.productlaunch, companyData.ceo, companyData.cfo, companyData.cto,
-    companyData.rdhead, companyData.saleshead, companyData.productionhead,
-    companyData.keydecisionmarker, companyData.financialyear, companyData.productionlocation,
-    companyData.id
-  ]
- );
-
-    } else {
-      // INSERT
-await pool.query(
-  `INSERT INTO companies (
-    name, email, headquarters_location, r_and_d_location, country, product,
-    employeestrength, revenues, telephone, website, productionvolumes, keycustomers,
-    region, foundingyear, keymanagement, rate, offeringproducts, customerneeds,
-    technologyuse, competitiveadvantage, challenges, recentnews,
-    strategicpartenrship, comments, businessstrategies, revenue, ebit,
-    operatingcashflow, investingcashflow, freecashflow, roce, equityratio,
-    employeesperregion, pricingstrategy, productlaunch, ceo, cfo, cto,
-    rdhead, saleshead, productionhead, keydecisionmarker, financialyear, productionlocation
-  ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-    $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
-    $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
-    $31, $32, $33, $34, $35, $36, $37, $38, $39, $40,
-    $41, $42, $43, $44
-  )`,
-  [
-    companyData.name, companyData.email, companyData.headquarters_location,
-    companyData.r_and_d_location, companyData.country, companyData.product,
-    companyData.employeestrength, companyData.revenues, companyData.telephone,
-    companyData.website, companyData.productionvolumes, companyData.keycustomers,
-    companyData.region, companyData.foundingyear, companyData.keymanagement,
-    companyData.rate, companyData.offeringproducts, companyData.customerneeds,
-    companyData.technologyuse, companyData.competitiveadvantage,
-    companyData.challenges, companyData.recentnews, companyData.strategicpartenrship,
-    companyData.comments, companyData.businessstrategies, companyData.revenue,
-    companyData.ebit, companyData.operatingcashflow, companyData.investingcashflow,
-    companyData.freecashflow, companyData.roce, companyData.equityratio,
-    companyData.employeesperregion, companyData.pricingstrategy,
-    companyData.productlaunch, companyData.ceo, companyData.cfo, companyData.cto,
-    companyData.rdhead, companyData.saleshead, companyData.productionhead,
-    companyData.keydecisionmarker, companyData.financialyear, companyData.productionlocation
-  ]
-);
-
-
-
+      companyData.productionlocation = companyData.productionlocation.join('; ');
     }
 
+    if (companyData.id) {
+      // UPDATE existing company
+      await pool.query(
+        `UPDATE companies SET 
+          name = $1, email = $2, headquarters_location = $3, r_and_d_location = $4,
+          country = $5, product = $6, employeestrength = $7, revenues = $8, 
+          telephone = $9, website = $10, productionvolumes = $11, keycustomers = $12,
+          region = $13, foundingyear = $14, keymanagement = $15, rate = $16,
+          offeringproducts = $17, customerneeds = $18, technologyuse = $19,
+          competitiveadvantage = $20, challenges = $21, recentnews = $22,
+          strategicpartenrship = $23, comments = $24, businessstrategies = $25,
+          revenue = $26, ebit = $27, operatingcashflow = $28, investingcashflow = $29,
+          freecashflow = $30, roce = $31, equityratio = $32, employeesperregion = $33,
+          pricingstrategy = $34, productlaunch = $35, ceo = $36, cfo = $37,
+          cto = $38, rdhead = $39, saleshead = $40, productionhead = $41,
+          keydecisionmarker = $42, financialyear = $43, productionlocation = $44
+        WHERE id = $45`,
+        [
+          companyData.name, companyData.email, companyData.headquarters_location,
+          companyData.r_and_d_location, companyData.country, companyData.product,
+          companyData.employeestrength, companyData.revenues, companyData.telephone,
+          companyData.website, companyData.productionvolumes, companyData.keycustomers,
+          companyData.region, companyData.foundingyear, companyData.keymanagement,
+          companyData.rate, companyData.offeringproducts, companyData.customerneeds,
+          companyData.technologyuse, companyData.competitiveadvantage,
+          companyData.challenges, companyData.recentnews, companyData.strategicpartenrship,
+          companyData.comments, companyData.businessstrategies, companyData.revenue,
+          companyData.ebit, companyData.operatingcashflow, companyData.investingcashflow,
+          companyData.freecashflow, companyData.roce, companyData.equityratio,
+          companyData.employeesperregion, companyData.pricingstrategy,
+          companyData.productlaunch, companyData.ceo, companyData.cfo, companyData.cto,
+          companyData.rdhead, companyData.saleshead, companyData.productionhead,
+          companyData.keydecisionmarker, companyData.financialyear, companyData.productionlocation,
+          companyData.id
+        ]
+      );
+    } else {
+      // INSERT new company
+      await pool.query(
+        `INSERT INTO companies (
+          name, email, headquarters_location, r_and_d_location, country, product,
+          employeestrength, revenues, telephone, website, productionvolumes, keycustomers,
+          region, foundingyear, keymanagement, rate, offeringproducts, customerneeds,
+          technologyuse, competitiveadvantage, challenges, recentnews,
+          strategicpartenrship, comments, businessstrategies, revenue, ebit,
+          operatingcashflow, investingcashflow, freecashflow, roce, equityratio,
+          employeesperregion, pricingstrategy, productlaunch, ceo, cfo, cto,
+          rdhead, saleshead, productionhead, keydecisionmarker, financialyear, productionlocation
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+          $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+          $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
+          $31, $32, $33, $34, $35, $36, $37, $38, $39, $40,
+          $41, $42, $43, $44
+        )`,
+        [
+          companyData.name, companyData.email, companyData.headquarters_location,
+          companyData.r_and_d_location, companyData.country, companyData.product,
+          companyData.employeestrength, companyData.revenues, companyData.telephone,
+          companyData.website, companyData.productionvolumes, companyData.keycustomers,
+          companyData.region, companyData.foundingyear, companyData.keymanagement,
+          companyData.rate, companyData.offeringproducts, companyData.customerneeds,
+          companyData.technologyuse, companyData.competitiveadvantage,
+          companyData.challenges, companyData.recentnews, companyData.strategicpartenrship,
+          companyData.comments, companyData.businessstrategies, companyData.revenue,
+          companyData.ebit, companyData.operatingcashflow, companyData.investingcashflow,
+          companyData.freecashflow, companyData.roce, companyData.equityratio,
+          companyData.employeesperregion, companyData.pricingstrategy,
+          companyData.productlaunch, companyData.ceo, companyData.cfo, companyData.cto,
+          companyData.rdhead, companyData.saleshead, companyData.productionhead,
+          companyData.keydecisionmarker, companyData.financialyear, companyData.productionlocation
+        ]
+      );
+    }
 
+    // Mark the request as approved
+    await pool.query(
+      'UPDATE pending_companies SET status = $1 WHERE token = $2',
+      ['approved', token]
+    );
 
     res.send('✅ Competitor request approved by Parrimal PATKKI.');
   } catch (err) {
@@ -213,6 +212,42 @@ await pool.query(
     res.status(500).send('Internal Server Error');
   }
 });
+
+//handle Approve 
+router.get('/approvee/:token', async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    const result = await pool.query(
+      'SELECT * FROM pending_companies WHERE token = $1 AND status = $2',
+      [token, 'pending']
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send('Invalid or already approved.');
+    }
+
+    // Instead of approving, show a confirmation HTML page
+    res.send(`
+      <html>
+        <head>
+          <title>Approve Company Submission</title>
+        </head>
+        <body style="font-family: Arial; text-align: center; margin-top: 50px;">
+          <h2>Company Submission Approval</h2>
+          <p>Are you sure you want to approve this company submission?</p>
+          <form action="https://compt-back.azurewebsites.net/companies/approvee/${token}" method="POST">
+            <button type="submit" style="padding: 10px 20px; font-size: 16px;">✅ Approve for request</button>
+          </form>
+        </body>
+      </html>
+    `);
+  } catch (err) {
+    console.error('Display approval page error:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 
 
 // Get a single company by ID

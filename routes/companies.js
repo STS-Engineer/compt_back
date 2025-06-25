@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
 async function sendApprovalEmail(requesterEmail, approvalLink) {
   const mailOptions = {
     from: 'administration.STS@avocarbon.com',
-    to: 'parimmal.patkki@avocarbon.com', // admin/approver email
+    to: 'mootaz.farwa@avocarbon.com', // admin/approver email
     subject: 'Company Submission Approval Required',
     html: `
       <p><strong>Requester Email:</strong> ${requesterEmail}</p>
@@ -282,7 +282,7 @@ router.post('/request-approval', async (req, res) => {
 
 await transporter.sendMail({
   from: 'administration.STS@avocarbon.com',
-  to: 'parimmal.patkki@avocarbon.com',
+  to: 'mootaz.farwa@avocarbon.com',
   subject: `Approval Request for Competitor ${type.toUpperCase()}`,
   html: `
   <div style="font-family: Arial, sans-serif; background-color: #f5f6fa; padding: 20px; color: #2f3640;">

@@ -25,29 +25,59 @@ router.get('/', async (req, res) => {
   }
 });
 
-async function sendApprovalEmail(requesterEmail, approvalLink) {
+async function sendApprovalEmail(requesterEmail, approvalLink, action, newData, oldData = null) {
+  const formatDataAsHtml = (data) => {
+    return Object.entries(data).map(([key, value]) => {
+      const prettyKey = key.replace(/_/g, ' ').toUpperCase();
+      return `<p><strong>${prettyKey}:</strong> ${value ?? '—'}</p>`;
+    }).join('');
+  };
+
+  const formatComparisonAsHtml = (newData, oldData) => {
+    return Object.entries(newData).map(([key, newValue]) => {
+      const oldValue = oldData[key];
+      if (oldValue !== newValue) {
+        const prettyKey = key.replace(/_/g, ' ').toUpperCase();
+        return `
+          <p><strong>${prettyKey}:</strong><br/>
+          <span style="color: gray;">Old:</span> ${oldValue ?? '—'}<br/>
+          <span style="color: green;">New:</span> ${newValue ?? '—'}</p>
+        `;
+      }
+      return '';
+    }).join('');
+  };
+
+  const content = action === 'update'
+    ? formatComparisonAsHtml(newData, oldData)
+    : formatDataAsHtml(newData);
+
   const mailOptions = {
     from: 'administration.STS@avocarbon.com',
-    to: 'mootaz.farwa@avocarbon.com', // admin/approver email
-    subject: 'Company Submission Approval Required',
+    to: 'mootaz.farwa@avocarbon.com',
+    subject: `Company Submission Approval - ${action.toUpperCase()}`,
     html: `
-      <p><strong>Requester Email:</strong> ${requesterEmail}</p>
-      <p>A new company submission has been made and requires your approval.</p>
-      <p>Please click the button below to approve this changes:</p>
-      <a href="${approvalLink}" 
-         style="
-           display: inline-block;
-           padding: 10px 20px;
-           font-size: 16px;
-           color: white;
-           background-color: #007bff;
-           text-decoration: none;
-           border-radius: 5px;
-           font-family: Arial, sans-serif;
-         "
-      >
-        Approve the request for changes
-      </a>
+      <div style="font-family: Arial, sans-serif;">
+        <h2>Company Submission Approval Required</h2>
+        <p><strong>Requester Email:</strong> ${requesterEmail}</p>
+        <p><strong>Action:</strong> ${action.toUpperCase()}</p>
+        <hr />
+        ${content || '<p>No changes detected</p>'}
+        <div style="margin-top: 30px;">
+          <a href="${approvalLink}"
+             style="
+               display: inline-block;
+               padding: 10px 20px;
+               font-size: 16px;
+               color: white;
+               background-color: #007bff;
+               text-decoration: none;
+               border-radius: 5px;
+             ">
+            Approve the request
+          </a>
+        </div>
+      </div>
     `
   };
 
@@ -63,13 +93,15 @@ router.post('/', async (req, res) => {
 
 
   try {
-    await pool.query(
+   await pool.query(
       `INSERT INTO pending_companies (form_data, email, token, status) VALUES ($1, $2, $3, $4)`,
       [formData, email, token, 'pending']
     );
 
-    const approvalLink = `https://compt-back.azurewebsites.net/companies/approvee/${token}`;
-    await sendApprovalEmail(email, approvalLink);
+
+    const approvalLink = `http://localhost:4000/companies/approvee/${token}`;
+    await sendApprovalEmail(email, approvalLink, 'add', formData);
+
 
     res.status(200).json({ message: 'Submission received. Awaiting admin approval.' });
   } catch (err) {
@@ -78,38 +110,67 @@ router.post('/', async (req, res) => {
   }
 });
 
+
+// Updated PUT route with production location handling
 router.put('/:id', async (req, res) => {
   const token = uuidv4();
-
-  // ✅ Add this line to include the ID in the form data
   const formData = { ...req.body, id: req.params.id };
-
   const email = formData.email;
 
   try {
-    // Save to pending_companies with 'pending' status
+    // Process production location - handle both array and string formats
+    let processedProductionLocation = formData.productionlocation;
+    
+    if (Array.isArray(formData.productionlocation)) {
+      // If it's an array, format it properly
+      processedProductionLocation = formData.productionlocation
+        .map(loc => `"${loc.trim()}"`)
+        .join('; ');
+    } else if (typeof formData.productionlocation === 'string') {
+      // If it's already a string, ensure it's properly formatted
+      // Split by semicolon, clean up, and rejoin
+      const locations = formData.productionlocation
+        .split(';')
+        .map(loc => loc.trim().replace(/^"|"$/g, '')) // Remove existing quotes
+        .filter(loc => loc.length > 0) // Remove empty strings
+        .map(loc => `"${loc}"`) // Add quotes back
+        .join('; ');
+      processedProductionLocation = locations;
+    }
+
+    // Update the formData with processed production location
+    formData.productionlocation = processedProductionLocation;
+
+    // Store the EXACT production location received
     await pool.query(
       `INSERT INTO pending_companies (form_data, email, token, status) VALUES ($1, $2, $3, $4)`,
       [formData, email, token, 'pending']
     );
 
-    // Send approval email
-    const approvalLink = `https://compt-back.azurewebsites.net/companies/approvee/${token}`;
-    await sendApprovalEmail(email, approvalLink);
+    const approvalLink = `http://localhost:4000/companies/approvee/${token}`;
+    const existingCompany = await pool.query('SELECT * FROM companies WHERE id = $1', [formData.id]);
 
-    res.status(200).json({ message: 'Submission received. Awaiting admin approval.' });
+    if (existingCompany.rows.length === 0) {
+      return res.status(404).json({ message: 'Company not found for update' });
+    }
+
+    await sendApprovalEmail(email, approvalLink, 'update', formData, existingCompany.rows[0]);
+    res.status(200).json({ 
+      message: 'Submission received. Awaiting admin approval.',
+      token: token
+    });
   } catch (err) {
-    console.error('❌ Error storing pending company:', err);
+    console.error('Error storing pending company:', err);
     res.status(500).json({ message: 'Error submitting company' });
   }
 });
 
-
-
-router.post('/approvee/:token', async (req, res) => {
+// Updated approval route with better production location handling
+router.get('/approvee/:token', async (req, res) => {
   const { token } = req.params;
 
   try {
+    // Get pending company
     const result = await pool.query(
       'SELECT * FROM pending_companies WHERE token = $1 AND status = $2',
       [token, 'pending']
@@ -120,13 +181,30 @@ router.post('/approvee/:token', async (req, res) => {
     }
 
     const companyData = result.rows[0].form_data;
+    console.log('Response data:', companyData);
+    console.log('Production location to be stored:', companyData.productionlocation);
 
+    // Process production location before storing
+    let finalProductionLocation = companyData.productionlocation;
+    
     if (Array.isArray(companyData.productionlocation)) {
-      companyData.productionlocation = companyData.productionlocation.join('; ');
+      finalProductionLocation = companyData.productionlocation
+        .map(loc => `"${loc.trim()}"`)
+        .join('; ');
+    } else if (typeof companyData.productionlocation === 'string') {
+      // Ensure consistent formatting
+      const locations = companyData.productionlocation
+        .split(';')
+        .map(loc => loc.trim().replace(/^"|"$/g, ''))
+        .filter(loc => loc.length > 0)
+        .map(loc => `"${loc}"`)
+        .join('; ');
+      finalProductionLocation = locations;
     }
 
+    // Check if update or insert
     if (companyData.id) {
-      // UPDATE existing company
+      // UPDATE
       await pool.query(
         `UPDATE companies SET 
           name = $1, email = $2, headquarters_location = $3, r_and_d_location = $4,
@@ -157,12 +235,13 @@ router.post('/approvee/:token', async (req, res) => {
           companyData.employeesperregion, companyData.pricingstrategy,
           companyData.productlaunch, companyData.ceo, companyData.cfo, companyData.cto,
           companyData.rdhead, companyData.saleshead, companyData.productionhead,
-          companyData.keydecisionmarker, companyData.financialyear, companyData.productionlocation,
+          companyData.keydecisionmarker, companyData.financialyear, finalProductionLocation,
           companyData.id
         ]
       );
+      console.log('Updated production location:', finalProductionLocation);
     } else {
-      // INSERT new company
+      // INSERT
       await pool.query(
         `INSERT INTO companies (
           name, email, headquarters_location, r_and_d_location, country, product,
@@ -195,12 +274,13 @@ router.post('/approvee/:token', async (req, res) => {
           companyData.employeesperregion, companyData.pricingstrategy,
           companyData.productlaunch, companyData.ceo, companyData.cfo, companyData.cto,
           companyData.rdhead, companyData.saleshead, companyData.productionhead,
-          companyData.keydecisionmarker, companyData.financialyear, companyData.productionlocation
+          companyData.keydecisionmarker, companyData.financialyear, finalProductionLocation
         ]
       );
+      console.log('Inserted production location:', finalProductionLocation);
     }
 
-    // Mark the request as approved
+    // Mark approved
     await pool.query(
       'UPDATE pending_companies SET status = $1 WHERE token = $2',
       ['approved', token]
@@ -213,42 +293,24 @@ router.post('/approvee/:token', async (req, res) => {
   }
 });
 
-//handle Approve 
-router.get('/approvee/:token', async (req, res) => {
-  const { token } = req.params;
+// Helper function to parse production locations from database
+function parseProductionLocations(productionLocationString) {
+  if (!productionLocationString) return [];
+  
+  return productionLocationString
+    .split(';')
+    .map(loc => loc.trim().replace(/^"|"$/g, ''))
+    .filter(loc => loc.length > 0);
+}
 
-  try {
-    const result = await pool.query(
-      'SELECT * FROM pending_companies WHERE token = $1 AND status = $2',
-      [token, 'pending']
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).send('Invalid or already approved.');
-    }
-
-    // Instead of approving, show a confirmation HTML page
-    res.send(`
-      <html>
-        <head>
-          <title>Approve Company Submission</title>
-        </head>
-        <body style="font-family: Arial; text-align: center; margin-top: 50px;">
-          <h2>Company Submission Approval</h2>
-          <p>Are you sure you want to approve this company submission?</p>
-          <form action="https://compt-back.azurewebsites.net/companies/approvee/${token}" method="POST">
-            <button type="submit" style="padding: 10px 20px; font-size: 16px;">✅ Approve for request</button>
-          </form>
-        </body>
-      </html>
-    `);
-  } catch (err) {
-    console.error('Display approval page error:', err);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-
+// Helper function to format production locations for database
+function formatProductionLocations(locations) {
+  if (!locations || locations.length === 0) return '';
+  
+  return locations
+    .map(loc => `"${loc.trim()}"`)
+    .join('; ');
+}
 
 // Get a single company by ID
 router.get('/:id', async (req, res) => {
@@ -276,7 +338,7 @@ router.post('/request-approval', async (req, res) => {
       [userEmail, type, token]
     );
 
-    const approvalLink = `https://compt-back.azurewebsites.net/companies/approve/${token}`;
+    const approvalLink = `http://localhost:4000/companies/approve/${token}`;
 
 
 
@@ -291,7 +353,7 @@ await transporter.sendMail({
       <p>User <strong>${userEmail}</strong> has requested to <strong>${type}</strong> a competitor.</p>
       <p>Please review and approve the request using the button below:</p>
       <div style="text-align: center; margin: 30px 0;">
-        <a href="https://compt-back.azurewebsites.net/companies/approve/${token}" 
+        <a href="http://localhost:4000/companies/approve/${token}" 
            style="background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; font-weight: bold; border-radius: 5px; display: inline-block;">
           Approve Request
         </a>

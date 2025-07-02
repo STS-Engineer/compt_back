@@ -170,7 +170,6 @@ router.get('/approvee/:token', async (req, res) => {
   const { token } = req.params;
 
   try {
-    // Get pending company
     const result = await pool.query(
       'SELECT * FROM pending_companies WHERE token = $1 AND status = $2',
       [token, 'pending']
@@ -181,30 +180,88 @@ router.get('/approvee/:token', async (req, res) => {
     }
 
     const companyData = result.rows[0].form_data;
-    console.log('Response data:', companyData);
-    console.log('Production location to be stored:', companyData.productionlocation);
 
-    // Process production location before storing
+    // Simple HTML page with company info and form to approve
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Approve Company Submission</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; }
+          .container { max-width: 600px; margin: auto; }
+          h1 { color: #007bff; }
+          .info { margin-bottom: 20px; }
+          button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+          }
+          button:hover {
+            background-color: #218838;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>Approve Company Submission</h1>
+          <div class="info">
+            <p><strong>Name:</strong> ${companyData.name || '—'}</p>
+            <p><strong>Email:</strong> ${companyData.email || '—'}</p>
+            <p><strong>Product:</strong> ${companyData.product || '—'}</p>
+            <!-- Add other fields as needed -->
+          </div>
+          <form method="POST" action="/companies/approvee/${token}">
+            <button type="submit">Confirm Approval</button>
+          </form>
+        </div>
+      </body>
+      </html>
+    `);
+  } catch (err) {
+    console.error('Error loading approval page:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.post('/approvee/:token', async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    // Get pending company info
+    const pendingRes = await pool.query(
+      'SELECT * FROM pending_companies WHERE token = $1 AND status = $2',
+      [token, 'pending']
+    );
+
+    if (pendingRes.rows.length === 0) {
+      return res.status(404).send('Invalid or already approved.');
+    }
+
+    const companyData = pendingRes.rows[0].form_data;
+
+    // Prepare production location format (same logic as before)
     let finalProductionLocation = companyData.productionlocation;
-    
     if (Array.isArray(companyData.productionlocation)) {
       finalProductionLocation = companyData.productionlocation
         .map(loc => `"${loc.trim()}"`)
         .join('; ');
     } else if (typeof companyData.productionlocation === 'string') {
-      // Ensure consistent formatting
-      const locations = companyData.productionlocation
+      finalProductionLocation = companyData.productionlocation
         .split(';')
         .map(loc => loc.trim().replace(/^"|"$/g, ''))
         .filter(loc => loc.length > 0)
         .map(loc => `"${loc}"`)
         .join('; ');
-      finalProductionLocation = locations;
     }
 
-    // Check if update or insert
+    // Insert or update company
     if (companyData.id) {
-      // UPDATE
+      // Update existing company
       await pool.query(
         `UPDATE companies SET 
           name = $1, email = $2, headquarters_location = $3, r_and_d_location = $4,
@@ -239,9 +296,8 @@ router.get('/approvee/:token', async (req, res) => {
           companyData.id
         ]
       );
-      console.log('Updated production location:', finalProductionLocation);
     } else {
-      // INSERT
+      // Insert new company
       await pool.query(
         `INSERT INTO companies (
           name, email, headquarters_location, r_and_d_location, country, product,
@@ -277,21 +333,21 @@ router.get('/approvee/:token', async (req, res) => {
           companyData.keydecisionmarker, companyData.financialyear, finalProductionLocation
         ]
       );
-      console.log('Inserted production location:', finalProductionLocation);
     }
 
-    // Mark approved
+    // Update pending status to approved
     await pool.query(
       'UPDATE pending_companies SET status = $1 WHERE token = $2',
       ['approved', token]
     );
 
-    res.send('✅ Competitor request approved by Parrimal PATKKI.');
+    res.send('<h2>✅ Company successfully approved.</h2><p>You may now close this window.</p>');
   } catch (err) {
     console.error('Approval error:', err);
     res.status(500).send('Internal Server Error');
   }
 });
+
 
 // Helper function to parse production locations from database
 function parseProductionLocations(productionLocationString) {

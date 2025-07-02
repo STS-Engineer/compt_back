@@ -99,7 +99,7 @@ router.post('/', async (req, res) => {
     );
 
 
-    const approvalLink = `http://https://compt-back.azurewebsites.net/companies/approvee/${token}`;
+    const approvalLink = `https://compt-back.azurewebsites.net/companies/approvee/${token}`;
     await sendApprovalEmail(email, approvalLink, 'add', formData);
 
 
@@ -147,7 +147,7 @@ router.put('/:id', async (req, res) => {
       [formData, email, token, 'pending']
     );
 
-    const approvalLink = `http://https://compt-back.azurewebsites.net/companies/approvee/${token}`;
+    const approvalLink = `https://compt-back.azurewebsites.net/companies/approvee/${token}`;
     const existingCompany = await pool.query('SELECT * FROM companies WHERE id = $1', [formData.id]);
 
     if (existingCompany.rows.length === 0) {
@@ -338,7 +338,7 @@ router.post('/request-approval', async (req, res) => {
       [userEmail, type, token]
     );
 
-    const approvalLink = `http://https://compt-back.azurewebsites.net/companies/approve/${token}`;
+    const approvalLink = `https://compt-back.azurewebsites.net/companies/approve/${token}`;
 
 
 

@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-async function sendApprovalEmail(requesterEmail, approvalLink, action, newData, oldData = null) {
+async function sendApprovalEmail(emailrequester, approvalLink, action, newData, oldData = null) {
   const formatDataAsHtml = (data) => {
     return Object.entries(data).map(([key, value]) => {
       const prettyKey = key.replace(/_/g, ' ').toUpperCase();
@@ -59,7 +59,7 @@ async function sendApprovalEmail(requesterEmail, approvalLink, action, newData, 
     html: `
       <div style="font-family: Arial, sans-serif;">
         <h2>Company Submission Approval Required</h2>
-        <p><strong>Requester Email:</strong> ${requesterEmail}</p>
+        <p><strong>Requester Email:</strong> ${}</p>
         <p><strong>Action:</strong> ${action.toUpperCase()}</p>
         <hr />
         ${content || '<p>No changes detected</p>'}
@@ -90,17 +90,18 @@ router.post('/', async (req, res) => {
   const token = uuidv4();
   const formData = req.body;
   const email = formData.email;
-
+  const emailrequester = formData.emailrequester; 
 
   try {
    await pool.query(
-      `INSERT INTO pending_companies (form_data, email, token, status) VALUES ($1, $2, $3, $4)`,
-      [formData, email, token, 'pending']
+      `INSERT INTO pending_companies (form_data, email, token, status, emailrequester) VALUES ($1, $2, $3, $4, $5)`,
+      [formData, email, token, 'pending', emailrequester]
     );
 
 
+
     const approvalLink = `https://compt-back.azurewebsites.net/companies/approvee/${token}`;
-    await sendApprovalEmail(email, approvalLink, 'add', formData);
+    await sendApprovalEmail(emailrequester, approvalLink, 'add', formData);
 
 
     res.status(200).json({ message: 'Submission received. Awaiting admin approval.' });
@@ -116,6 +117,7 @@ router.put('/:id', async (req, res) => {
   const token = uuidv4();
   const formData = { ...req.body, id: req.params.id };
   const email = formData.email;
+  const emailrequester = formData.emailrequester;   
 
   try {
     // Process production location - handle both array and string formats
@@ -143,9 +145,10 @@ router.put('/:id', async (req, res) => {
 
     // Store the EXACT production location received
     await pool.query(
-      `INSERT INTO pending_companies (form_data, email, token, status) VALUES ($1, $2, $3, $4)`,
-      [formData, email, token, 'pending']
+      `INSERT INTO pending_companies (form_data, email, token, status, emailrequester) VALUES ($1, $2, $3, $4, $5)`,
+      [formData, email, token, 'pending', emailrequester]
     );
+
 
     const approvalLink = `https://compt-back.azurewebsites.net/companies/approvee/${token}`;
     const existingCompany = await pool.query('SELECT * FROM companies WHERE id = $1', [formData.id]);
@@ -154,7 +157,7 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Company not found for update' });
     }
 
-    await sendApprovalEmail(email, approvalLink, 'update', formData, existingCompany.rows[0]);
+    await sendApprovalEmail(emailrequester, approvalLink, 'update', formData, existingCompany.rows[0]);
     res.status(200).json({ 
       message: 'Submission received. Awaiting admin approval.',
       token: token

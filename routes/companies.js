@@ -59,7 +59,7 @@ async function sendApprovalEmail(emailrequester, approvalLink, action, newData, 
     html: `
       <div style="font-family: Arial, sans-serif;">
         <h2>Company Submission Approval Required</h2>
-        <p><strong>Requester Email:</strong> ${}</p>
+        <p><strong>Requester Email:</strong> ${emailrequester}</p>
         <p><strong>Action:</strong> ${action.toUpperCase()}</p>
         <hr />
         ${content || '<p>No changes detected</p>'}

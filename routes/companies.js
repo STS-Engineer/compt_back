@@ -345,6 +345,25 @@ router.post('/approvee/:token', async (req, res) => {
     );
 
     res.send('<h2>✅ Company successfully approved.</h2><p>You may now close this window.</p>');
+        // Send confirmation email to requester
+    const mailOptions = {
+     from: 'administration.STS@avocarbon.com',
+     to: emailrequester,
+     subject: `✅ Company Submission Approved`,
+     html: `
+      <div style="font-family: Arial, sans-serif;">
+      <h2>🎉 Your Company Submission Has Been Approved</h2>
+      <p>Dear user,</p>
+      <p>Your submitted company "<strong>${companyData.name}</strong>" has been approved and added to the database.</p>
+      <p>Thank you for your contribution!</p>
+      <br />
+      <p style="font-size: 14px; color: gray;">This is an automated message. Please do not reply.</p>
+      </div>
+  `
+};
+
+  await transporter.sendMail(mailOptions);
+  console.log('Approval confirmation email sent to requester.');
   } catch (err) {
     console.error('Approval error:', err);
     res.status(500).send('Internal Server Error');

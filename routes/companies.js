@@ -246,6 +246,7 @@ router.post('/approvee/:token', async (req, res) => {
     }
 
     const companyData = pendingRes.rows[0].form_data;
+    const emailrequester =  pendingRes.rows[0].form_data.emailrequester;
 
     // Prepare production location format (same logic as before)
     let finalProductionLocation = companyData.productionlocation;
@@ -278,8 +279,8 @@ router.post('/approvee/:token', async (req, res) => {
           freecashflow = $30, roce = $31, equityratio = $32, employeesperregion = $33,
           pricingstrategy = $34, productlaunch = $35, ceo = $36, cfo = $37,
           cto = $38, rdhead = $39, saleshead = $40, productionhead = $41,
-          keydecisionmarker = $42, financialyear = $43, productionlocation = $44
-        WHERE id = $45`,
+          keydecisionmarker = $42, financialyear = $43, productionlocation = $44, emailrequester = $45
+        WHERE id = $46`,
         [
           companyData.name, companyData.email, companyData.headquarters_location,
           companyData.r_and_d_location, companyData.country, companyData.product,
@@ -295,7 +296,7 @@ router.post('/approvee/:token', async (req, res) => {
           companyData.employeesperregion, companyData.pricingstrategy,
           companyData.productlaunch, companyData.ceo, companyData.cfo, companyData.cto,
           companyData.rdhead, companyData.saleshead, companyData.productionhead,
-          companyData.keydecisionmarker, companyData.financialyear, finalProductionLocation,
+          companyData.keydecisionmarker, companyData.financialyear, finalProductionLocation, emailrequester,
           companyData.id
         ]
       );
@@ -310,13 +311,13 @@ router.post('/approvee/:token', async (req, res) => {
           strategicpartenrship, comments, businessstrategies, revenue, ebit,
           operatingcashflow, investingcashflow, freecashflow, roce, equityratio,
           employeesperregion, pricingstrategy, productlaunch, ceo, cfo, cto,
-          rdhead, saleshead, productionhead, keydecisionmarker, financialyear, productionlocation
+          rdhead, saleshead, productionhead, keydecisionmarker, financialyear, productionlocation, emailrequester
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
           $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
           $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
           $31, $32, $33, $34, $35, $36, $37, $38, $39, $40,
-          $41, $42, $43, $44
+          $41, $42, $43, $44, $45
         )`,
         [
           companyData.name, companyData.email, companyData.headquarters_location,
@@ -333,7 +334,7 @@ router.post('/approvee/:token', async (req, res) => {
           companyData.employeesperregion, companyData.pricingstrategy,
           companyData.productlaunch, companyData.ceo, companyData.cfo, companyData.cto,
           companyData.rdhead, companyData.saleshead, companyData.productionhead,
-          companyData.keydecisionmarker, companyData.financialyear, finalProductionLocation
+          companyData.keydecisionmarker, companyData.financialyear, finalProductionLocation, emailrequester
         ]
       );
     }
@@ -345,25 +346,27 @@ router.post('/approvee/:token', async (req, res) => {
     );
 
     res.send('<h2>✅ Company successfully approved.</h2><p>You may now close this window.</p>');
-        // Send confirmation email to requester
-    const mailOptions = {
-     from: 'administration.STS@avocarbon.com',
-     to: emailrequester,
-     subject: `✅ Company Submission Approved`,
-     html: `
-      <div style="font-family: Arial, sans-serif;">
+
+    // Send confirmation email to requester
+const mailOptions = {
+  from: 'administration.STS@avocarbon.com',
+  to: emailrequester,
+  subject: `✅ Company Submission Approved`,
+  html: `
+    <div style="font-family: Arial, sans-serif;">
       <h2>🎉 Your Company Submission Has Been Approved</h2>
       <p>Dear user,</p>
       <p>Your submitted company "<strong>${companyData.name}</strong>" has been approved and added to the database.</p>
       <p>Thank you for your contribution!</p>
       <br />
       <p style="font-size: 14px; color: gray;">This is an automated message. Please do not reply.</p>
-      </div>
+    </div>
   `
 };
 
   await transporter.sendMail(mailOptions);
   console.log('Approval confirmation email sent to requester.');
+
   } catch (err) {
     console.error('Approval error:', err);
     res.status(500).send('Internal Server Error');

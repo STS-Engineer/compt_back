@@ -3,9 +3,11 @@ const router = express.Router();
 const pool = require('../db');
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
+const xlsx = require('xlsx');
 
 
-    const transporter = nodemailer.createTransport({
+const transporter = nodemailer.createTransport({
      host: "avocarbon-com.mail.protection.outlook.com",
      port: 25,
      secure: false,
@@ -14,6 +16,104 @@ const { v4: uuidv4 } = require('uuid');
      pass: "shnlgdyfbcztbhxn",
      },
     });
+
+router.post('/upload-excel', upload.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).send('No file uploaded.');
+
+  try {
+    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = xlsx.utils.sheet_to_json(sheet);
+
+    for (const companyData of rows) {
+      // Ensure all fields exist, default to null
+      const values = [
+        companyData.name || null,
+        companyData.email || null,
+        companyData.headquarters_location || null,
+        companyData.r_and_d_location || null,
+        companyData.country || null,
+        companyData.product || null,
+        companyData.employeestrength || null,
+        companyData.revenues || null,
+        companyData.telephone || null,
+        companyData.website || null,
+        companyData.productionvolumes || null,
+        companyData.keycustomers || null,
+        companyData.region || null,
+        companyData.foundingyear || null,
+        companyData.keymanagement || null,
+        companyData.rate || null,
+        companyData.offeringproducts || null,
+        companyData.customerneeds || null,
+        companyData.technologyuse || null,
+        companyData.competitiveadvantage || null,
+        companyData.challenges || null,
+        companyData.recentnews || null,
+        companyData.strategicpartenrship || null,
+        companyData.comments || null,
+        companyData.businessstrategies || null,
+        companyData.revenue || null,
+        companyData.ebit || null,
+        companyData.operatingcashflow || null,
+        companyData.investingcashflow || null,
+        companyData.freecashflow || null,
+        companyData.roce || null,
+        companyData.equityratio || null,
+        companyData.employeesperregion || null,
+        companyData.pricingstrategy || null,
+        companyData.productlaunch || null,
+        companyData.ceo || null,
+        companyData.cfo || null,
+        companyData.cto || null,
+        companyData.rdhead || null,
+        companyData.saleshead || null,
+        companyData.productionhead || null,
+        companyData.keydecisionmarker || null,
+        companyData.financialyear || null,
+        // Handle productionlocation formatting
+        (() => {
+          let loc = companyData.productionlocation || '';
+          if (Array.isArray(loc)) {
+            return loc.map(l => `"${l.trim()}"`).join('; ');
+          } else if (typeof loc === 'string') {
+            return loc
+              .split(';')
+              .map(l => l.trim().replace(/^"|"$/g, ''))
+              .filter(l => l.length > 0)
+              .map(l => `"${l}"`)
+              .join('; ');
+          }
+          return null;
+        })()
+      ];
+
+      // Insert into companies table
+      await pool.query(
+        `INSERT INTO companies (
+          name, email, headquarters_location, r_and_d_location, country, product,
+          employeestrength, revenues, telephone, website, productionvolumes, keycustomers,
+          region, foundingyear, keymanagement, rate, offeringproducts, customerneeds,
+          technologyuse, competitiveadvantage, challenges, recentnews, strategicpartenrship,
+          comments, businessstrategies, revenue, ebit, operatingcashflow, investingcashflow,
+          freecashflow, roce, equityratio, employeesperregion, pricingstrategy, productlaunch,
+          ceo, cfo, cto, rdhead, saleshead, productionhead, keydecisionmarker,
+          financialyear, productionlocation
+        ) VALUES (
+          ${values.map((_, i) => `$${i + 1}`).join(', ')}
+        )`,
+        values
+      );
+    }
+
+    res.send('Excel file uploaded and companies inserted successfully.');
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).send('Error processing Excel file.');
+  }
+});
+
 // Get all companies
 router.get('/', async (req, res) => {       
   try {

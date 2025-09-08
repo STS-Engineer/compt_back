@@ -158,7 +158,7 @@ async function sendApprovalEmail(emailrequester, approvalLink, action, newData, 
 
   const mailOptions = {
     from: 'administration.STS@avocarbon.com',
-    to: 'mootaz.farwa@avocarbon.com',
+    to: 'parimmal.patkki@avocarbon.com',
     subject: `Company Submission Approval - ${action.toUpperCase()}`,
     html: `
       <div style="font-family: Arial, sans-serif;">
@@ -529,7 +529,7 @@ router.post('/request-approval', async (req, res) => {
 
 await transporter.sendMail({
   from: 'administration.STS@avocarbon.com',
-  to: 'mootaz.farwa@avocarbon.com',
+  to: 'parimmal.patkki@avocarbon.com',
   subject: `Approval Request for Competitor ${type.toUpperCase()}`,
   html: `
   <div style="font-family: Arial, sans-serif; background-color: #f5f6fa; padding: 20px; color: #2f3640;">
